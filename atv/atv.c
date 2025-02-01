@@ -94,15 +94,26 @@ void atualiza_display(int numero, PIO pio, uint sm) {
 }
 
 // Função de interrupção para os botões
-void gpio_irq_handler(uint gpio, uint32_t events){
-   if (gpio == button_A_pin) {  // Se o botão A foi pressionado
-        contador++;
-        if (contador > 9) contador = 0;  // Reseta ao alcançar 10
-        atualiza_display(contador, pio0, 0);  // Atualiza a matriz de LEDs
-    } else if (gpio == button_B_pin) {  // Se o botão B foi pressionado
-        contador--;
-        if (contador < 0) contador = 9;  // Reseta ao alcançar -1
-        atualiza_display(contador, pio0, 0);  // Atualiza a matriz de LEDs
+uint32_t last_time_A = 0;  // Variável de tempo para debouncing do botão A
+uint32_t last_time_B = 0;  // Variável de tempo para debouncing do botão B
+void gpio_irq_handler(uint gpio, uint32_t events) {
+    uint32_t current_time = to_us_since_boot(get_absolute_time()); // Tempo atual em microssegundos
+
+    if (gpio == button_A_pin) { // Se o botão A foi pressionado
+        if (current_time - last_time_A > 200000) { // 200ms de debouncing
+            last_time_A = current_time;
+            contador++;
+            if (contador > 9) contador = 0; // Reset ao chegar no 10
+            atualiza_display(contador, pio0, 0);
+        }
+    } 
+    else if (gpio == button_B_pin) { // Se o botão B foi pressionado
+        if (current_time - last_time_B > 200000) { // 200ms de debouncing
+            last_time_B = current_time;
+            contador--;
+            if (contador < 0) contador = 9; // Reset ao chegar no -1
+            atualiza_display(contador, pio0, 0);
+        }
     }
 }
 
