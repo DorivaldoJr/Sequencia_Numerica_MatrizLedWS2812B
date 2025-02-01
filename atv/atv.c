@@ -21,7 +21,8 @@ const uint button_A_pin = 5;
 const uint button_B_pin = 6;
 
 volatile int contador = 0; // contador para incremento e decremento dos botoes
-// Representação dos números de 0 a 9 na matriz 5x5
+
+// vetor com a representacao dos numeros 0-9(invertidos na horizontal para melhor visibilidade, algumas correcoes em pixels isolados)
 double numeros[10][25] = {
     {0,1,1,1,0, 
      0,1,0,1,0,
@@ -88,12 +89,12 @@ double numeros[10][25] = {
 void atualiza_display(int numero, PIO pio, uint sm) {
     uint32_t valor_led;
     for (int i = 0; i < NUM_PIXELS; i++) {
-        valor_led = matrix_rgb(numeros[numero][i], 0.0, 0.0); // Assume cor vermelha fixa por simplicidade
+        valor_led = matrix_rgb(numeros[numero][i], 0.0, 0.0); // Assume cor vermelha 
         pio_sm_put_blocking(pio, sm, valor_led);
     }
 }
 
-// Função de interrupção para os botões
+// Função de interrupção para os botões(com tratamento de deboucing do wilton)
 uint32_t last_time_A = 0;  // Variável de tempo para debouncing do botão A
 uint32_t last_time_B = 0;  // Variável de tempo para debouncing do botão B
 void gpio_irq_handler(uint gpio, uint32_t events) {
@@ -102,7 +103,7 @@ void gpio_irq_handler(uint gpio, uint32_t events) {
     if (gpio == button_A_pin) { // Se o botão A foi pressionado
         if (current_time - last_time_A > 200000) { // 200ms de debouncing
             last_time_A = current_time;
-            contador++;
+            contador++; // incrementa a variavel para mudanca de numero 
             if (contador > 9) contador = 0; // Reset ao chegar no 10
             atualiza_display(contador, pio0, 0);
         }
@@ -110,7 +111,7 @@ void gpio_irq_handler(uint gpio, uint32_t events) {
     else if (gpio == button_B_pin) { // Se o botão B foi pressionado
         if (current_time - last_time_B > 200000) { // 200ms de debouncing
             last_time_B = current_time;
-            contador--;
+            contador--;// decrementa a variavel para mudanca de numero 
             if (contador < 0) contador = 9; // Reset ao chegar no -1
             atualiza_display(contador, pio0, 0);
         }
